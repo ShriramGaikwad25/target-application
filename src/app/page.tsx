@@ -1,65 +1,121 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Replace with your auth logic
+    await new Promise((r) => setTimeout(r, 800));
+    setIsSubmitting(false);
+    router.push("/dashboard");
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex min-h-screen font-sans">
+      {/* Left panel - blue */}
+      <div
+        className="hidden w-1/3 min-w-[280px] lg:block"
+        style={{ backgroundColor: "#0040FF" }}
+      ></div>
+
+      {/* Right panel - white with form */}
+      <div className="flex flex-1 items-center justify-center bg-white px-6 py-12">
+        <div className="w-full max-w-sm">
+          {/* Key icon */}
+          <div
+            className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg"
+            style={{
+              background:
+                "linear-gradient(135deg, #86efac 0%, #22d3ee 50%, #0d9488 100%)",
+            }}
+          >
+            <svg
+              className="h-7 w-7 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+              />
+            </svg>
+          </div>
+
+          <h1 className="text-center text-2xl font-bold text-black">Log In</h1>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div>
+              <label
+                htmlFor="userId"
+                className="block text-sm font-normal text-black"
+              >
+                User ID*
+              </label>
+              <input
+                id="userId"
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                required
+                autoComplete="username"
+                placeholder="Insert your User ID"
+                className="mt-1.5 w-full rounded border border-gray-300 bg-white px-3.5 py-2.5 text-black placeholder-gray-400 placeholder:italic outline-none transition focus:border-[#0040FF] focus:ring-1 focus:ring-[#0040FF]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-normal text-black"
+              >
+                Password*
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="Insert your password"
+                className="mt-1.5 w-full rounded border border-gray-300 bg-white px-3.5 py-2.5 text-black placeholder-gray-400 placeholder:italic outline-none transition focus:border-[#0040FF] focus:ring-1 focus:ring-[#0040FF]"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
+              style={{ backgroundColor: "#0040FF" }}
             >
-              Learning
-            </a>{" "}
-            center.
+              {isSubmitting ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-black">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="font-normal text-[#0040FF] underline"
+            >
+              Register with SSO
+            </Link>
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
