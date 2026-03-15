@@ -31,7 +31,6 @@ export default function AdminPage() {
     () => [
       {
         headerName: '',
-        field: 'expand',
         width: 60,
         cellRenderer: 'agGroupCellRenderer',
       },
