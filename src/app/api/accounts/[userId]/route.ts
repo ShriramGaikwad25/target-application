@@ -1,12 +1,13 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const UPDATE_BASE_URL = 'https://preview.keyforge.ai/gbma/account/update';
 
 export async function PUT(
-  request: Request,
-  context: { params: { userId: string } },
+  request: NextRequest,
+  context: { params: Promise<{ userId: string }> },
 ) {
-  const { userId } = context.params;
+  const { userId } = await context.params;
 
   try {
     const incoming = await request.json();

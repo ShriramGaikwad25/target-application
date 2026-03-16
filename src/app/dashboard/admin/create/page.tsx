@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface AccountFormState {
@@ -14,7 +14,7 @@ interface AccountFormState {
   roleName: string;
 }
 
-export default function AdminCreatePage() {
+function AdminCreateForm() {
   const router = useRouter();
   const search = useSearchParams();
   const mode = search.get('mode') === 'edit' ? 'edit' : 'create';
@@ -193,6 +193,14 @@ export default function AdminCreatePage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function AdminCreatePage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCreateForm />
+    </Suspense>
   );
 }
 

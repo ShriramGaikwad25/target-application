@@ -41,7 +41,7 @@ export default function AdminPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerRow, setDrawerRow] = useState<AdminRow | null>(null);
   const [groups, setGroups] = useState<
-    { id: string; displayName: string; memberIds: string[] }
+    { id: string; displayName: string; memberIds: string[] }[]
   >([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsError, setGroupsError] = useState<string | null>(null);
@@ -66,7 +66,6 @@ export default function AdminPage() {
       { headerName: 'Role Name', field: 'roleName', flex: 1 },
       {
         headerName: 'Action',
-        field: 'action',
         width: 110,
         sortable: false,
         filter: false,
@@ -203,7 +202,6 @@ export default function AdminPage() {
       { headerName: 'Type', field: 'type', width: 130 },
       {
         headerName: '',
-        field: 'actions',
         width: 70,
         cellRenderer: (params: any) => {
           const row = params.data as Entitlement;
@@ -297,9 +295,9 @@ export default function AdminPage() {
                 id: g.id as string,
                 displayName: g.displayName as string,
                 memberIds: Array.isArray(g.members)
-                  ? g.members
+                  ? (g.members
                       .map((m: any) => m?.value as string | undefined)
-                      .filter((v): v is string => Boolean(v))
+                      .filter((v: string | undefined): v is string => Boolean(v)) as string[])
                   : [],
               }))
             : [];
