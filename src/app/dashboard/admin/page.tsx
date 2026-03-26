@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ColDef, ModuleRegistry } from 'ag-grid-community';
@@ -49,6 +49,91 @@ export default function AdminPage() {
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
+
+  const loadAccounts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch('/api/accounts');
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const json = (await res.json()) as
+        | any[]
+        | { Resources?: any[] };
+      const resources = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.Resources)
+          ? json.Resources
+          : [];
+
+      const mapped: AdminRow[] = resources.map((item, index) => ({
+        id: index + 1,
+        userId: item.userId ?? '',
+        accountName: item.accountName ?? '',
+        lastName: item.lastName ?? '',
+        firstName: item.firstName ?? '',
+        department: item.department ?? '',
+        clientName: item.clientName ?? '',
+        planName: item.planName ?? '',
+        roleName: item.roleName ?? '',
+        entitlements:
+          Array.isArray(item.groups) && item.groups.length > 0
+            ? item.groups.map((g: any, i: number) => ({
+                id: i + 1,
+                name: g.display ?? g.value ?? '',
+                type: 'Group',
+                userId: item.userId ?? '',
+              }))
+            : [],
+      }));
+
+      setRowData(mapped);
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadGroups = useCallback(async () => {
+    try {
+      setGroupsLoading(true);
+      setGroupsError(null);
+      const res = await fetch('/api/groups');
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      const json = (await res.json()) as
+        | any[]
+        | { Resources?: any[] };
+      const resources = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.Resources)
+          ? json.Resources
+          : [];
+
+      const mapped =
+        resources.length > 0
+          ? resources.map((g) => ({
+              id: g.id as string,
+              displayName: g.displayName as string,
+              memberIds: Array.isArray(g.members)
+                ? (g.members
+                    .map((m: any) => m?.value as string | undefined)
+                    .filter((v: string | undefined): v is string => Boolean(v)) as string[])
+                : [],
+            }))
+          : [];
+      setGroups(mapped);
+    } catch (e: any) {
+      setGroupsError(e?.message ?? 'Failed to load groups');
+    } finally {
+      setGroupsLoading(false);
+    }
+  }, []);
 
   const columnDefs = useMemo<ColDef<AdminRow>[]>(
     () => [
@@ -151,49 +236,8 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch('/api/accounts');
-        if (!res.ok) {
-          throw new Error(`Request failed with status ${res.status}`);
-        }
-
-        const json = (await res.json()) as any[];
-
-        const mapped: AdminRow[] = json.map((item, index) => ({
-          id: index + 1,
-          userId: item.userId ?? '',
-          accountName: item.accountName ?? '',
-          lastName: item.lastName ?? '',
-          firstName: item.firstName ?? '',
-          department: item.department ?? '',
-          clientName: item.clientName ?? '',
-          planName: item.planName ?? '',
-          roleName: item.roleName ?? '',
-          entitlements:
-            Array.isArray(item.groups) && item.groups.length > 0
-              ? item.groups.map((g: any, i: number) => ({
-                  id: i + 1,
-                  name: g.display ?? g.value ?? '',
-                  type: 'Group',
-                  userId: item.userId ?? '',
-                }))
-              : [],
-        }));
-
-        setRowData(mapped);
-      } catch (e: any) {
-        setError(e?.message ?? 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
+    loadAccounts();
+  }, [loadAccounts]);
 
   const detailColumnDefs = useMemo<ColDef<Entitlement>[]>(
     () => [
@@ -229,8 +273,8 @@ export default function AdminPage() {
                   }
                   // eslint-disable-next-line no-console
                   console.log('Revoked group', row.name, 'for user', row.userId);
-                  // Refresh grid data after successful revoke
-                  router.refresh();
+                  await loadAccounts();
+                  await loadGroups();
                 } catch (e) {
                   // eslint-disable-next-line no-console
                   console.error('Error revoking group', e);
@@ -263,7 +307,7 @@ export default function AdminPage() {
         },
       },
     ],
-    [],
+    [loadAccounts, loadGroups],
   );
 
   const detailCellRendererParams = useMemo(
@@ -280,40 +324,11 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    async function loadGroups() {
-      try {
-        setGroupsLoading(true);
-        setGroupsError(null);
-        const res = await fetch('/api/groups');
-        if (!res.ok) {
-          throw new Error(`Request failed with status ${res.status}`);
-        }
-        const json = (await res.json()) as any[];
-        const mapped =
-          Array.isArray(json) && json.length > 0
-            ? json.map((g) => ({
-                id: g.id as string,
-                displayName: g.displayName as string,
-                memberIds: Array.isArray(g.members)
-                  ? (g.members
-                      .map((m: any) => m?.value as string | undefined)
-                      .filter((v: string | undefined): v is string => Boolean(v)) as string[])
-                  : [],
-              }))
-            : [];
-        setGroups(mapped);
-      } catch (e: any) {
-        setGroupsError(e?.message ?? 'Failed to load groups');
-      } finally {
-        setGroupsLoading(false);
-      }
-    }
-
     loadGroups();
-  }, []);
+  }, [loadGroups]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Admin</h1>
         <button
@@ -325,7 +340,14 @@ export default function AdminPage() {
         </button>
       </div>
 
-      <div className="ag-theme-quartz flex-1 rounded border border-gray-200 bg-white">
+      <div
+        className="ag-theme-quartz rounded border border-gray-200 bg-white"
+        style={
+          {
+            '--ag-details-row-min-height': '0px',
+          } as React.CSSProperties
+        }
+      >
         {error && (
           <div className="px-4 py-2 text-sm text-red-600">
             Failed to load data: {error}
@@ -500,8 +522,8 @@ export default function AdminPage() {
                       );
                     }
                     setDrawerOpen(false);
-                    // Refresh main page data after successful assignment
-                    router.refresh();
+                    await loadAccounts();
+                    await loadGroups();
                   } catch (e: any) {
                     setAssignError(e?.message ?? 'Failed to assign groups');
                   } finally {
